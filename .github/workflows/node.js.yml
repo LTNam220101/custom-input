@@ -1,44 +1,35 @@
-name: Node.js CI
+name: Deploy Vite App to GitHub Pages
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches:
+      - master   # hoặc main nếu repo của bạn dùng main
+
+permissions:
+  contents: write   # cho phép action push branch gh-pages
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [24.4.1]
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'yarn'
-    - run: npm i -g yarn
-    - run: yarn install --frozen-lockfile
-    - run: yarn build
-    - run: yarn test
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm i -g yarn
-      - run: yarn install --frozen-lockfile
-      - run: yarn build
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build project
+        run: yarn build
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist   # CRA -> build, Vite -> dist
+          publish_dir: ./dist   # Vite -> dist
