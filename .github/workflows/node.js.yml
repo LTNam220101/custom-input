@@ -1,26 +1,26 @@
-name: Deploy Vite App to GitHub Pages
+name: Deploy Vite App to GitHub Pages (Official)
 
 on:
   push:
     branches:
-      - master   # hoặc main nếu repo của bạn dùng main
+      - master   # hoặc main
 
 permissions:
-  contents: write   # cho phép action push branch gh-pages
+  contents: read
+  pages: write      # cần cho deploy
+  id-token: write   # cần cho deploy
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'yarn'
+          cache: yarn
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -28,8 +28,18 @@ jobs:
       - name: Build project
         run: yarn build
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload build artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist   # Vite -> dist
+          path: ./dist   # Vite -> dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
